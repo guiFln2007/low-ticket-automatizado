@@ -10,13 +10,6 @@ by [@adsborba](https://instagram.com/adsborba)
 2. Rode no terminal:
 
 ```bash
-claude mcp add-skill https://github.com/guiFln2007/low-ticket-automatizado
-```
-
-Ou manualmente:
-
-```bash
-# Copie o SKILL.md pra pasta de skills do Claude
 mkdir -p ~/.claude/skills/automatico
 curl -o ~/.claude/skills/automatico/SKILL.md https://raw.githubusercontent.com/guiFln2007/low-ticket-automatizado/main/SKILL.md
 ```
