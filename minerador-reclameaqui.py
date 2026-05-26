@@ -82,29 +82,22 @@ def run_devbrowser(script, timeout=15):
             f.write(script)
         result = subprocess.run(
             f'"{DEVBROWSER_CMD}" --connect http://localhost:{EDGE_PORT} --timeout {timeout} < "{TEMP_SCRIPT}"',
-            capture_output=True, text=True, encoding="utf-8",
-            timeout=timeout + 10, shell=True,
+            capture_output=True, timeout=timeout + 10, shell=True,
         )
-        output = result.stdout.strip()
-        if result.stderr and result.stderr.strip():
-            print(f"    [dev-browser stderr] {result.stderr.strip()[:120]}", flush=True)
+        output = result.stdout.decode("utf-8", errors="replace").strip()
         if output:
             for line in reversed(output.split("\n")):
                 line = line.strip()
                 if line.startswith("{") or line.startswith("["):
                     try:
                         return json.loads(line)
-                    except json.JSONDecodeError as e:
-                        print(f"    [JSON error] {e} — line: {line[:100]}", flush=True)
+                    except json.JSONDecodeError:
                         return None
-        else:
-            print(f"    [dev-browser] no output (rc={result.returncode})", flush=True)
         return None
     except subprocess.TimeoutExpired:
-        print(f"    [dev-browser] timeout ({timeout}s)", flush=True)
         return None
-    except Exception as e:
-        print(f"    [dev-browser] error: {e}", flush=True)
+    except Exception:
+        return None
         return None
     finally:
         try: os.remove(TEMP_SCRIPT)
@@ -304,19 +297,24 @@ def run(gateways_to_scrape=None, pages=3, max_details=10):
         complaints = []
         for link in links[:max_details]:
             detail = get_detail(link["url"])
-            if detail and detail.get("date"):
-                classification, signal = classify_complaint(link["title"], detail.get("content", ""))
-                product = extract_product_name(link["title"], detail.get("content", ""))
-                niche = classify_niche(link["title"], detail.get("content", ""))
+            # Retry once if failed
+            if not detail:
+                time.sleep(2)
+                detail = get_detail(link["url"])
+            if detail:
+                content = detail.get("content", "")
+                classification, signal = classify_complaint(link["title"], content)
+                product = extract_product_name(link["title"], content)
+                niche = classify_niche(link["title"], content)
 
                 entry = {
                     "gateway": gw,
                     "title": link["title"],
                     "url": link["url"],
-                    "date": detail["date"],
+                    "date": detail.get("date", ""),
                     "time": detail.get("time", ""),
                     "city": detail.get("city", ""),
-                    "content": detail.get("content", ""),
+                    "content": content,
                     "prices": detail.get("prices", []),
                     "classification": classification,
                     "signal": signal,
@@ -380,4 +378,4 @@ if __name__ == "__main__":
         max_d = int(sys.argv[3]) if len(sys.argv) > 3 else 10
         run(gws, pages=pages, max_details=max_d)
     else:
-        run(pages=10, max_details=15)
+        run(pages=10, max_details=40)
