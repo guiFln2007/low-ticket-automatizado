@@ -11,7 +11,7 @@ by [@adsborba](https://instagram.com/adsborba)
 
 ```bash
 mkdir -p ~/.claude/skills/automatico
-curl -o ~/.claude/skills/automatico/SKILL.md https://raw.githubusercontent.com/guiFln2007/low-ticket-automatizado/main/SKILL.md
+curl -o ~/.claude/skills/automatico/SKILL.md https://raw.githubusercontent.com/guiFln2007/low-ticket-automatizado/master/SKILL.md
 ```
 
 3. Abra o Claude Code e digite `/automatico`
